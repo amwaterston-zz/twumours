@@ -1,0 +1,11 @@
+<h1><%= @title %></h1>
+<form action="/create/<%= @type %>" method="post" id="template">
+	<p>
+		<label><%= @type.capitalize %>:</label><br />
+		<input type="text" name="<%= @type %>[text]" id="text" size="100"/>
+	</p>
+	<p>
+		<input type="submit" />
+	</p>
+</form>
+		

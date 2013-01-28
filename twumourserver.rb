@@ -2,7 +2,7 @@ require 'rubygems'
 require 'sinatra'
 require 'data_mapper'
 
-DataMapper::setup(:default, "sqlite3://#{Dir.pwd}/rumours.db")
+DataMapper::setup(:default, "postgres://localhost/rumours")
 
 class Template
   include DataMapper::Resource
@@ -25,6 +25,7 @@ class Celebrity
   property :text, String
 end
 
+DataMapper.finalize
 DataMapper.auto_upgrade!
 
 #utf-8 outgoing
@@ -37,39 +38,74 @@ get '/' do
   erb :welcome
 end
 
-get '/templates' do
-  @title = "List templates"
-  @templates = Template.all()
-  erb :templates
+get '/list/:type' do
+  @type = params[:type]
+  @title = "List #{@type}"
+  case @type
+  when "template"
+    @list = Template.all()
+  when "subject"
+    @list = Subject.all()
+  when "celebrity"
+    @list = Celebrity.all()
+  end
+  erb :list
 end
 
-get '/newtemplate' do
-  @title = "Create a new rumour template"
-  erb :newtemplate
+get '/new/:type' do
+  @type = params[:type]
+  @title = "Create a new #{@type}"
+  erb :new
 end
 
-post '/createtemplate' do
-  @template = Template.new(params[:template])
-  if @template.save
-    redirect "/template/#{@template.id}"
+post '/create/:type' do
+  @type = params[:type]
+  case @type
+  when "template"
+    @item = Template.new(params[:template])
+  when "subject"
+    @item = Subject.new(params[:subject])
+  when "celebrity"
+    @item = Celebrity.new(params[:celebrity])
+  end
+
+  if @item.save
+    redirect "/item/#{@type}/#{@item.id}"
   else
-    redirect "/templates"
+    redirect "/list/#{@type}"
   end
 end
 
-get '/template/:id' do
-  @template = Template.get(params[:id])
-  if @template
-    erb :template
+get '/item/:type/:id' do
+  @type = params[:type]
+  case @type
+  when "template"
+    @item = Template.get(params[:id])
+  when "subject"
+    @item = Subject.get(params[:id])
+  when "celebrity"
+    @item = Celebrity.get(params[:id])
+  end
+
+  if @item
+    erb :item
   else
-    redirect('/templates')
+    redirect("/list/#{@type}")
   end
 end
 
-get '/deletetemplate/:id' do
-  template = Template.get(params[:id])
-  unless template.nil?
-    template.destroy
+get '/delete/:type/:id' do
+  @type = params[:type]
+  case @type
+  when "template"
+    item = Template.get(params[:id])
+  when "subject"
+    item = Subject.get(params[:id])
+  when "celebrity"
+    item = Celebrity.get(params[:id])
   end
-  redirect('/templates')
+  unless item.nil?
+    item.destroy
+  end
+  redirect("/list/#{@type}")
 end
