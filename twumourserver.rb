@@ -2,8 +2,8 @@ require 'rubygems'
 require 'sinatra'
 require 'data_mapper'
 
-DataMapper::setup(:default, "postgres://rumourbot:mk7NqDQYPg4xUJ@localhost/rumours")
-
+#DataMapper::setup(:default, "postgres://rumourbot:mk7NqDQYPg4xUJ@localhost/rumours")
+DataMapper::setup(:default, "postgres://localhost/rumours")
 class Template
   include DataMapper::Resource
   
@@ -28,6 +28,23 @@ end
 DataMapper.finalize
 DataMapper.auto_upgrade!
 
+def getRumour
+  if (Template.count > 0 && Subject.count > 0 && Celebrity.count > 1)
+    t = Template.first(:offset => rand(Template.count)).text
+    while t.include?("*S") do
+      s = Subject.first(:offset => rand(Subject.count)).text
+      t.sub!("*S", s)
+    end
+    cs = Celebrity.all
+    cs.shuffle!
+    while t.include?("*C") do
+      c = cs.pop
+      t.sub!("*C", c.text)
+    end
+  end
+  t
+end
+
 #utf-8 outgoing
 before do
   headers "Content-Type" => "text/html; charset=utf-8"
@@ -35,6 +52,7 @@ end
 
 get '/' do
   @title = "Rumour Mill"
+  @sample = getRumour
   erb :welcome
 end
 
