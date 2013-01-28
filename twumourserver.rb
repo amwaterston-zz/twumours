@@ -2,7 +2,7 @@ require 'rubygems'
 require 'sinatra'
 require 'data_mapper'
 
-DataMapper::setup(:default, "postgres://localhost/rumours")
+DataMapper::setup(:default, "postgres://rumourbot:mk7NqDQYPg4xUJ@localhost/rumours")
 
 class Template
   include DataMapper::Resource
