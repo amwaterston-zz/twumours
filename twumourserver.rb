@@ -2,8 +2,8 @@ require 'rubygems'
 require 'sinatra'
 require 'data_mapper'
 
-DataMapper::setup(:default, "postgres://rumourbot:mk7NqDQYPg4xUJ@localhost/rumours")
-#DataMapper::setup(:default, "postgres://localhost/rumours")
+#DataMapper::setup(:default, "postgres://rumourbot:mk7NqDQYPg4xUJ@localhost/rumours")
+DataMapper::setup(:default, "postgres://localhost/rumours")
 
 class Template
   include DataMapper::Resource
@@ -26,6 +26,13 @@ class Celebrity
   property :text, String
 end
 
+class Hashtag
+  include DataMapper::Resource
+  
+  property :id, Serial
+  property :text, String
+end
+
 DataMapper.finalize
 DataMapper.auto_upgrade!
 
@@ -41,6 +48,12 @@ def getRumour
     while t.include?("*C") do
       c = cs.pop
       t.sub!("*C", c.text)
+    end
+    hts = Hashtag.all
+    hts.shuffle!
+    while t.include?("*#") do
+      h = hts.pop
+      t.sub!("*#", h.text)
     end
   end
   t
@@ -67,6 +80,8 @@ get '/list/:type' do
     @list = Subject.all()
   when "celebrity"
     @list = Celebrity.all()
+  when "hashtag"
+    @list = Hashtag.all()
   end
   erb :list
 end
@@ -86,6 +101,8 @@ post '/create/:type' do
     @item = Subject.new(params[:subject])
   when "celebrity"
     @item = Celebrity.new(params[:celebrity])
+  when "hashtag"
+    @item = Hashtag.new(params[:hashtag])
   end
 
   if @item.save
@@ -104,6 +121,8 @@ get '/item/:type/:id' do
     @item = Subject.get(params[:id])
   when "celebrity"
     @item = Celebrity.get(params[:id])
+  when "hashtag"
+    @item = Hashtag.get(params[:id])
   end
 
   if @item
@@ -122,6 +141,8 @@ get '/delete/:type/:id' do
     item = Subject.get(params[:id])
   when "celebrity"
     item = Celebrity.get(params[:id])
+  when "hashtag"
+    item = Hashtag.get(params[:id])
   end
   unless item.nil?
     item.destroy
